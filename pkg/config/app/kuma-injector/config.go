@@ -25,6 +25,7 @@ func DefaultConfig() Config {
 		},
 		Injector: Injector{
 			ControlPlane: ControlPlane{
+				Namespace: "kuma-system",
 				ApiServer: ApiServer{
 					URL: "http://kuma-control-plane.kuma-system:5681",
 				},
@@ -100,6 +101,8 @@ type Injector struct {
 
 // ControlPlane defines coordinates of the Control Plane.
 type ControlPlane struct {
+	// Namespace in which the Control Plane is deployed
+	Namespace string `yaml:"namespace,omitempty" envconfig:"kuma_injector_control_plane_namespace"`
 	// ApiServer defines coordinates of the Control Plane API Server.
 	ApiServer ApiServer `yaml:"apiServer,omitempty"`
 }
@@ -233,6 +236,9 @@ func (i *Injector) Validate() (errs error) {
 var _ config.Config = &ControlPlane{}
 
 func (c *ControlPlane) Validate() (errs error) {
+	if c.Namespace == "" {
+		errs = multierr.Append(errs, errors.New(".Namespace must be non-empty"))
+	}
 	if err := c.ApiServer.Validate(); err != nil {
 		errs = multierr.Append(errs, errors.Wrapf(err, ".ApiServer is not valid"))
 	}
